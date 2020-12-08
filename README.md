@@ -1,3 +1,4 @@
 # sinwha
-mini project for mother\n
+mini project for mom
+
 raspberryPi + nodejs
