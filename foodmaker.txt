@@ -1,0 +1,81 @@
+import datetime
+from openpyxl import *
+import os
+from openpyxl.styles import *
+
+
+##### Global Variable #####
+data_for_write = []
+
+filepath_safety_news = None
+filepath_db = None
+filepath_form = None
+##### Global Variable #####
+
+
+if __name__ == '__main__':
+    today = (datetime.datetime.now()).strftime('%Y-%m-%d')
+    filepath_safety_news = os.getcwd() + '\\Files\\' + today + '_푸드뉴스.xlsx'
+    filepath_db = os.getcwd() + '\\Files\\푸드안전정보 DB.xlsx'
+    filepath_form = os.getcwd() + '\\Files\\' + today + '_푸드뉴스 메일.xlsx'
+
+    excel_safety_news = load_workbook(filepath_safety_news)
+    for sheetname in ["Included", "Undecided"]:
+        # sheet = excel_safety_news.get_sheet_by_name(sheetname)
+        row_num = 2
+        while row_num <= excel_safety_news[sheetname].max_row:
+            if excel_safety_news[sheetname].cell(row=row_num, column=6).value is not None:
+                data_for_write.append({
+                    "검색일자": today,
+                    "제목": excel_safety_news[sheetname].cell(row=row_num, column=3).value,
+                    "게시일자": excel_safety_news[sheetname].cell(row=row_num, column=5).value,
+                    "사이트": excel_safety_news[sheetname].cell(row=row_num, column=1).value,
+                    "링크": excel_safety_news[sheetname].cell(row=row_num, column=4).value,
+                })
+            row_num = row_num + 1
+    excel_safety_news.close()
+
+    excel_db = load_workbook(filepath_db)
+    # sheet = excel_db.get_sheet_by_name("DB")
+    row_num = excel_db["DB"].max_row + 1
+    for data in data_for_write:
+        excel_db["DB"]["A" + str(row_num)] = data["검색일자"]
+        excel_db["DB"]["B" + str(row_num)] = data["제목"]
+        excel_db["DB"]["C" + str(row_num)] = data["게시일자"]
+        excel_db["DB"]["D" + str(row_num)] = data["사이트"]
+        excel_db["DB"]["E" + str(row_num)] = data["링크"]
+        row_num = row_num + 1
+    excel_db.save(filepath_db)
+    excel_db.close()
+
+    excel_form = Workbook()
+    # sheet = excel_form.get_sheet_by_name("Sheet")
+    excel_form["Sheet"].column_dimensions["A"].width = 10.6
+    excel_form["Sheet"].column_dimensions['B'].width = 90.6
+
+    excel_form["Sheet"]["A1"] = "No."
+    excel_form["Sheet"]["B1"] = "제 목"
+    excel_form["Sheet"]["A1"].font = Font(name="맑은 고딕", size=10, bold=True)
+    excel_form["Sheet"]["B1"].font = Font(name="맑은 고딕", size=10, bold=True)
+    excel_form["Sheet"]["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    excel_form["Sheet"]["B1"].alignment = Alignment(horizontal="center", vertical="center")
+    excel_form["Sheet"]["A1"].fill = PatternFill(patternType="solid", fgColor=Color(rgb='00E2EFD9'))
+    excel_form["Sheet"]["B1"].fill = PatternFill(patternType="solid", fgColor=Color(rgb='00E2EFD9'))
+    excel_form["Sheet"]["A1"].border = Border(top=Side(style='thin'), bottom=Side(style='thin'), left=Side(style='thin'), right=Side(style='thin'))
+    excel_form["Sheet"]["B1"].border = Border(top=Side(style='thin'), bottom=Side(style='thin'), left=Side(style='thin'), right=Side(style='thin'))
+
+    current_row = 2
+    for data in data_for_write:
+        excel_form["Sheet"]["A" + str(current_row)] = current_row - 1
+        excel_form["Sheet"]["B" + str(current_row)] = data["제목"]
+        excel_form["Sheet"]["A" + str(current_row)].font = Font(name="맑은 고딕", size=10, bold=True)
+        excel_form["Sheet"]["B" + str(current_row)].font = Font(name="맑은 고딕", size=10, bold=True, color=Color(rgb='000000FF'), underline='single')
+        excel_form["Sheet"]["A" + str(current_row)].alignment = Alignment(horizontal="center", vertical="center")
+        excel_form["Sheet"]["B" + str(current_row)].alignment = Alignment(horizontal="left", vertical="center")
+        excel_form["Sheet"]["A" + str(current_row)].border = Border(top=Side(style='thin'), bottom=Side(style='thin'), left=Side(style='thin'), right=Side(style='thin'))
+        excel_form["Sheet"]["B" + str(current_row)].border = Border(top=Side(style='thin'), bottom=Side(style='thin'), left=Side(style='thin'), right=Side(style='thin'))
+        excel_form["Sheet"]["B" + str(current_row)].hyperlink = data["링크"]
+        current_row = current_row + 1
+
+    excel_form.save(filepath_form)
+    excel_form.close()
